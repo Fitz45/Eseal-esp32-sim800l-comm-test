@@ -1,32 +1,18 @@
-router.post('/update', async (req, res) => {
-  const { seal_code, status, lat, lng } = req.body;
+import express from "express";
+import supabase from "../supabase.js";
 
-  const { data: seal } = await supabase
-    .from('seals')
-    .select('id')
-    .eq('seal_code', seal_code)
-    .single();
+const router = express.Router();
 
-  await supabase.from('gps_logs').insert([{
-    seal_id: seal.id,
-    latitude: lat,
-    longitude: lng,
-  }]);
+router.get("/gps", async (req, res) => {
+  const { data, error } = await supabase
+    .from("gps_data")
+    .select("*");
 
-  await supabase.from('seals')
-    .update({ status })
-    .eq('id', seal.id);
-
-  res.json({ message: 'Data received' });
-});
-router.get('/gps/:seal_id', async (req, res) => {
-  const { seal_id } = req.params;
-
-  const { data } = await supabase
-    .from('gps_logs')
-    .select('*')
-    .eq('seal_id', seal_id)
-    .order('timestamp', { ascending: false });
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
 
   res.json(data);
 });
+
+export default router;
